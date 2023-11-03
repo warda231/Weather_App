@@ -48,8 +48,8 @@ class _NextDaysPageState extends State<NextDaysPage> {
     return Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(
-    color: Colors.white, 
-  ),
+          color: Colors.white,
+        ),
         title: Center(
           child: Text(
             'Next 7 Days',
@@ -92,9 +92,11 @@ class _NextDaysPageState extends State<NextDaysPage> {
                         padding: const EdgeInsets.all(8.0),
                         child: Container(
                             height: screenHeight * 0.35,
-                            width: screenWidth * 0.75,
+                            width: screenWidth * 0.88,
                             decoration: BoxDecoration(
-                              color: purple,
+                              color: bluecolor.withOpacity(0.7),
+                              border:
+                                  Border.all(color: Colors.white, width: 1.0),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
@@ -115,13 +117,13 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      formatDate( hourlyData.forecast!.forecastday![0].date
-                                          .toString())
-                                     ,
+                                      formatDate(hourlyData
+                                          .forecast!.forecastday![0].date
+                                          .toString()),
                                       style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.white,
-                                      ),
+                                          fontSize: 18,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     SizedBox(
                                       width: 15,
@@ -132,7 +134,7 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                               .toString() +
                                           ' C  ',
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 19,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -146,12 +148,15 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                   color: Colors.white,
                                 ),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment
+                                      .start, // Adjust this alignment as needed
+                                  crossAxisAlignment: CrossAxisAlignment
+                                      .center, // Center vertically
                                   children: [
                                     Icon(
                                       WeatherIcons.wind_beaufort_0,
                                       color: Colors.white,
-                                      size: 20,
+                                      size: 16,
                                     ),
                                     Text(
                                       hourlyData.forecast!.forecastday![0].day!
@@ -159,18 +164,18 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                               .toString() +
                                           ' Wind',
                                       style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 18,
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     SizedBox(
-                                      width: 49,
+                                      width: screenWidth * 0.12,
                                     ),
                                     Icon(
                                       WeatherIcons.raindrop,
                                       color: Colors.white,
-                                      size: 15,
+                                      size: 16,
                                     ),
                                     Text(
                                       hourlyData!.forecast!.forecastday![0].day!
@@ -178,7 +183,7 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                               .toString() +
                                           '% Humidity',
                                       style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 18,
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -186,15 +191,18 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                   ],
                                 ),
                                 SizedBox(
-                                  height: 10,
+                                  height: 7,
                                 ),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment
+                                      .start, // Adjust this alignment as needed
+                                  crossAxisAlignment: CrossAxisAlignment
+                                      .center, // Center vertically
                                   children: [
                                     Icon(
                                       WeatherIcons.rain,
                                       color: Colors.white,
-                                      size: 15,
+                                      size: 16,
                                     ),
                                     Text(
                                       hourlyData!.forecast!.forecastday![0].day!
@@ -202,18 +210,18 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                               .toString() +
                                           '  Chance of rain',
                                       style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 16,
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     SizedBox(
-                                      width: 49,
+                                      width: screenWidth * 0.05,
                                     ),
                                     Icon(
                                       WeatherIcons.thermometer,
                                       color: Colors.white,
-                                      size: 10,
+                                      size: 16,
                                     ),
                                     Text(
                                       hourlyData!.forecast!.forecastday![0].day!
@@ -221,7 +229,7 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                               .toString() +
                                           ' Pressure',
                                       style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 16,
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -244,9 +252,11 @@ class _NextDaysPageState extends State<NextDaysPage> {
                               child: Center(
                                 child: Container(
                                   height: screenHeight * 0.1,
-                                  width: screenWidth * 0.75,
+                                  width: screenWidth * 0.88,
                                   decoration: BoxDecoration(
-                                    color: purple,
+                                    color: bluecolor.withOpacity(0.7),
+                                    border: Border.all(
+                                        color: Colors.white, width: 1.0),
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
@@ -259,39 +269,34 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                       ),
                                     ],
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Row(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              right: 100.0),
-                                              
-                                          child: Text(
-formatDate(hourlyData!.forecast!
-                                                .forecastday![index].date
-                                                .toString(),),
-                                            
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.white),
-                                          ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      Text(
+                                        formatDate(
+                                          hourlyData!.forecast!
+                                              .forecastday![index].date
+                                              .toString(),
                                         ),
-                                        Text(
-                                          hourlyData!
-                                                  .forecast!
-                                                  .forecastday![index]
-                                                  .day!
-                                                  .avgtempC
-                                                  .toString() +
-                                              ' °C  ',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.white),
-                                        ),
-                                        Image.network('https:' + iconurl!),
-                                      ],
-                                    ),
+                                        style: TextStyle(
+                                            fontSize: 18, color: Colors.white),
+                                      ),
+                                      Text(
+                                        hourlyData!
+                                                .forecast!
+                                                .forecastday![index]
+                                                .day!
+                                                .avgtempC
+                                                .toString() +
+                                            ' °C  ',
+                                        style: TextStyle(
+                                            fontSize: 18, color: Colors.white),
+                                      ),
+                                      Image.network('https:' + iconurl!),
+                                    ],
                                   ),
                                 ),
                               ),
