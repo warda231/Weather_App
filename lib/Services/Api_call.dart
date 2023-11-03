@@ -22,7 +22,7 @@ Future<List<City>> fetchCityData(
         if (query != null) {
           cities = cities
               .where((element) =>
-                  element.name!.toLowerCase().contains(query.toLowerCase()))
+                  element.name!.toLowerCase().contains(query.toLowerCase()))  
               .toList();
         }
         return cities;
