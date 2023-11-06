@@ -1,21 +1,21 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
-import 'dart:convert';
-import 'dart:math';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:weather_app/Constants/api_key.dart';
 import 'package:weather_app/Constants/colors.dart';
-import 'package:weather_app/Models/ForecastModel.dart';
+import 'package:weather_app/View/Search.dart';
 import 'package:weather_app/View/next_days.dart';
 import 'package:weather_icons/weather_icons.dart';
 import 'package:http/http.dart' as http;
+import 'package:location/location.dart';
+import 'dart:html' as html;
 
 import '../Models/CityModel.dart';
-import '../Models/WeatherData.dart';
 import '../Services/Api_call.dart';
+import 'package:location/location.dart' as location_package;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,26 +26,50 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? location;
-  City? selectedCity;
+  String? selectedCity;
+  double? locationlatitude;
+  double? locationlongitude;
 
-  void selectCity(City city) {
-    setState(() {
-      selectedCity = city;
-    });
+  location_package.Location locations = location_package.Location();
+  LocationData? currentLocation;
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
   }
 
-  void updateLocation(String newLocation) {
-    setState(() {
-      location = newLocation;
-      selectedCity = null;
-    });
+  Future<void> _getCurrentLocation() async {
+    try {
+      final position =
+          await html.window.navigator.geolocation.getCurrentPosition();
+      final latitude = position.coords?.latitude;
+      final longitude = position.coords?.longitude;
+
+      if (latitude != null && longitude != null) {
+        print('Latitude: $latitude, Longitude: $longitude');
+      } else {
+        // Handle the case where the position is not available.
+        print('Latitude and longitude not available.');
+      }
+      setState(() {
+        locationlatitude = latitude as double?;
+        locationlongitude = longitude as double?;
+      });
+    } catch (e) {
+      final errorMessage = e.toString();
+      if (errorMessage.contains('User denied permission') ||
+          errorMessage.contains('PositionError')) {
+        print('Geolocation error: Permission denied or PositionError');
+      } else {
+        print('Error: $e');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    TextEditingController searchController = TextEditingController();
     String formatTime(String time) {
       final parsedTime = DateTime.parse(time);
       final formattedTime = DateFormat.jm().format(parsedTime);
@@ -60,14 +84,40 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: bluecolor,
+        title: Center(
+          child: Text(
+            'Weather App',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SearchPage()),
+                );
+              },
+              icon: Icon(
+                Icons.search,
+                color: Colors.white,
+              ))
+        ],
+      ),
       body: SingleChildScrollView(
         child: Container(
+          width: double.infinity,
           decoration: BoxDecoration(
             gradient: LinearGradient(
                 colors: [bluecolor, lightblue, purple],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter),
-            //color: purple,
             boxShadow: [
               BoxShadow(
                 color: Colors.white,
@@ -79,262 +129,185 @@ class _HomePageState extends State<HomePage> {
           ),
           child: Column(
             children: [
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    width: screenWidth * 0.88,
-                    height: screenHeight * 0.07,
-                    child: TextField(
-                      controller: searchController,
-                      decoration: InputDecoration(
-                        fillColor: lightblue,
-                        filled: true,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            Icons.search,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            updateLocation(searchController.text);
-                          },
-                        ),
-                        hintText: 'Search...',
-                        hintStyle: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontStyle: FontStyle.normal,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-                FutureBuilder<List<City>>(
-                  future: fetchCityData(searchController.text,
-                      '9b3fa55b5c4a4a89a9855630233010', location ?? 'Gujrat'),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      print('Error in city data: ${snapshot.error}');
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Text('No matching cities found');
-                    } else {
-                      final filteredCities = snapshot.data;
-                      return Container(
-                        width: screenWidth * 0.88,
-                        height: screenHeight * 0.1,
-                        decoration: BoxDecoration(
-                          color: bluecolor,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: ListView.builder(
-                          itemCount: filteredCities?.length,
-                          itemBuilder: (context, index) {
-                            final city = filteredCities![index];
-
-                            return GestureDetector(
-                              onTap: () {
-                                selectCity(city);
-                              },
-                              child: ListTile(
-                                title: Text(
-                                  city.name,
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 18),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }
-                  },
-                ),
               SizedBox(
                 height: 30,
               ),
-                Container(
-                  height: screenHeight * 0.50,
-                  width: screenWidth * 0.88,
-                  decoration: BoxDecoration(
-                    color: bluecolor.withOpacity(0.5),
-                    border: Border.all(color: Colors.white, width: 2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Expanded(
-                    child: FutureBuilder(
-                        future: fetchData('9b3fa55b5c4a4a89a9855630233010',
-                            location ?? 'Gujrat'),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (snapshot.hasError) {
-                            print('Error: ${snapshot.error}');
-                            return Text('Error: ${snapshot.error}');
-                          } else if (!snapshot.hasData) {
-                            return Text('No data available');
-                          } else {
-                            final weatherData = snapshot.data;
-                            final iconurl = weatherData!.current.condition.icon;
-
-                            return Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(10.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.location_on,
-                                        color: Colors.white,
-                                      ),
-                                      Text(
-                                        weatherData!.location.name.toString(),
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  formatTime(weatherData.location.localtime),
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.network('https:' + iconurl),
-                                    Padding(
-                                      padding: const EdgeInsets.all(5.0),
-                                      child: Text(
-                                        weatherData.current.tempC.toString() +
-                                            ' °C',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  weatherData.current.condition.text.toString(),
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Divider(
-                                  color: Colors.white,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      WeatherIcons.wind_beaufort_2,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(5.0),
-                                      child: Text(
-                                        weatherData.current.windDegree
-                                                .toString() +
-                                            ' Wind',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: screenWidth * 0.12,
-                                    ),
-                                    Icon(
-                                      WeatherIcons.raindrop,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(2.0),
-                                      child: Text(
-                                        weatherData.current.humidity
-                                                .toString() +
-                                            '%Humidity',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(
-                                  height: 7,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      WeatherIcons.rain,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                    Text(
-                                      ' ' +
-                                          weatherData.current.precipIn
-                                              .toString() +
-                                          '  Rain Chances',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: screenWidth * 0.05,
-                                    ),
-                                    Icon(
-                                      WeatherIcons.thermometer,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                    Text(
-                                      weatherData.current.pressureMb
-                                              .toString() +
-                                          'Pressure',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          }
-                        }),
-                  ),
+              Container(
+                height: screenHeight * 0.50,
+                width: screenWidth * 0.88,
+                decoration: BoxDecoration(
+                  color: bluecolor.withOpacity(0.5),
+                  border: Border.all(color: Colors.white, width: 2),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                child: Expanded(
+                  child: FutureBuilder(
+                      future: fetchlocationData(
+                          '9b3fa55b5c4a4a89a9855630233010',
+                          locationlatitude ?? 0.0,
+                          locationlongitude ?? 0.0),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          print('Error: ${snapshot.error}');
+                          return Text('Error: ${snapshot.error}');
+                        } else if (!snapshot.hasData) {
+                          return Text('No data available');
+                        } else {
+                          final weatherData = snapshot.data;
+                          final iconurl = weatherData!.current.condition.icon;
+
+                          return Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      color: Colors.white,
+                                    ),
+                                    Text(
+                                      weatherData!.location.name.toString(),
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                formatTime(weatherData.location.localtime),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.network('https:' + iconurl),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      weatherData.current.tempC.toString() +
+                                          ' °C',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                weatherData.current.condition.text.toString(),
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Divider(
+                                color: Colors.white,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    WeatherIcons.wind_beaufort_2,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      weatherData.current.windDegree
+                                              .toString() +
+                                          ' Wind',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: screenWidth * 0.12,
+                                  ),
+                                  Icon(
+                                    WeatherIcons.raindrop,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(2.0),
+                                    child: Text(
+                                      weatherData.current.humidity.toString() +
+                                          '%Humidity',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: 7,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    WeatherIcons.rain,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  Text(
+                                    ' ' +
+                                        weatherData.current.precipIn
+                                            .toString() +
+                                        '  Rain Chances',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: screenWidth * 0.05,
+                                  ),
+                                  Icon(
+                                    WeatherIcons.thermometer,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  Text(
+                                    weatherData.current.pressureMb.toString() +
+                                        'Pressure',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }
+                      }),
+                ),
+              ),
               SizedBox(
                 height: screenHeight * 0.01,
               ),
@@ -350,8 +323,11 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 child: FutureBuilder(
-                    future: fetchForecastData('9b3fa55b5c4a4a89a9855630233010',
-                        location ?? 'Gujrat', 1),
+                    future: fetchlocationForecastData(
+                        '9b3fa55b5c4a4a89a9855630233010',
+                        locationlatitude ?? 0.0,
+                        locationlongitude ?? 0.0,
+                        1),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(child: CircularProgressIndicator());

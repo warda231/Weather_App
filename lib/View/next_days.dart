@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_adjacent_string_concatenation, prefer_const_constructors, prefer_const_literals_to_create_immutables
+// ignore_for_file: prefer_adjacent_string_concatenation, prefer_const_constructors, prefer_const_literals_to_create_immutables, prefer_interpolation_to_compose_strings
 
 import 'dart:convert';
 
@@ -62,251 +62,273 @@ class _NextDaysPageState extends State<NextDaysPage> {
         ),
         backgroundColor: bluecolor,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-              colors: [bluecolor, lightblue, purple],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter),
-        ),
-        child: FutureBuilder(
-            future: fetchForecastData('9b3fa55b5c4a4a89a9855630233010',
-                widget.searchCity ?? 'Gujrat', 7),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                print('Error in second container: ${snapshot.error}');
-                return Text('Error: ${snapshot.error}');
-              } else if (!snapshot.hasData) {
-                return Text('No data available');
-              } else {
-                final hourlyData = snapshot.data;
-                final iconURL =
-                    hourlyData!.forecast!.forecastday![0].day!.condition!.icon;
+      body: SingleChildScrollView(
+        child: Container(
+          height: 800,
+          width: double.infinity,
 
-                return Column(
-                  children: [
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                            height: screenHeight * 0.35,
-                            width: screenWidth * 0.88,
-                            decoration: BoxDecoration(
-                              color: bluecolor.withOpacity(0.7),
-                              border:
-                                  Border.all(color: Colors.white, width: 1.0),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white,
-                                  offset: Offset(0, 2),
-                                  blurRadius: 2, // Blur radius of the shadow
-                                  spreadRadius:
-                                      1, // Spread radius of the shadow
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  height: 20,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      formatDate(hourlyData
-                                          .forecast!.forecastday![0].date
-                                          .toString()),
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    SizedBox(
-                                      width: 15,
-                                    ),
-                                    Text(
-                                      hourlyData!.forecast!.forecastday![0].day!
-                                              .avgtempC
-                                              .toString() +
-                                          ' C  ',
-                                      style: TextStyle(
-                                        fontSize: 19,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    Image.network('https:' + iconURL!),
-                                  ],
-                                ),
-                                SizedBox(
-                                  height: 20,
-                                ),
-                                Divider(
-                                  color: Colors.white,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment
-                                      .start, // Adjust this alignment as needed
-                                  crossAxisAlignment: CrossAxisAlignment
-                                      .center, // Center vertically
-                                  children: [
-                                    Icon(
-                                      WeatherIcons.wind_beaufort_0,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                    Text(
-                                      hourlyData.forecast!.forecastday![0].day!
-                                              .maxwindKph
-                                              .toString() +
-                                          ' Wind',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: screenWidth * 0.12,
-                                    ),
-                                    Icon(
-                                      WeatherIcons.raindrop,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                    Text(
-                                      hourlyData!.forecast!.forecastday![0].day!
-                                              .avghumidity
-                                              .toString() +
-                                          '% Humidity',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(
-                                  height: 7,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment
-                                      .start, // Adjust this alignment as needed
-                                  crossAxisAlignment: CrossAxisAlignment
-                                      .center, // Center vertically
-                                  children: [
-                                    Icon(
-                                      WeatherIcons.rain,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                    Text(
-                                      hourlyData!.forecast!.forecastday![0].day!
-                                              .dailyChanceOfRain
-                                              .toString() +
-                                          '  Chance of rain',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: screenWidth * 0.05,
-                                    ),
-                                    Icon(
-                                      WeatherIcons.thermometer,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                    Text(
-                                      hourlyData!.forecast!.forecastday![0].day!
-                                              .totalprecipIn
-                                              .toString() +
-                                          ' Pressure',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            )),
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView.builder(
-                          scrollDirection: Axis.vertical,
-                          itemCount: hourlyData!.forecast!.forecastday?.length,
-                          itemBuilder: (context, index) {
-                            final iconurl = hourlyData.forecast!
-                                .forecastday![index].day!.condition!.icon;
-                            return Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: Center(
-                                child: Container(
-                                  height: screenHeight * 0.1,
-                                  width: screenWidth * 0.88,
-                                  decoration: BoxDecoration(
-                                    color: bluecolor.withOpacity(0.7),
-                                    border: Border.all(
-                                        color: Colors.white, width: 1.0),
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.white,
-                                        offset: Offset(2, 2),
-                                        blurRadius:
-                                            2, // Blur radius of the shadow
-                                        spreadRadius:
-                                            1, // Spread radius of the shadow
-                                      ),
-                                    ],
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [bluecolor, lightblue, purple],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter),
+          ),
+          child: FutureBuilder(
+              future: fetchForecastData('9b3fa55b5c4a4a89a9855630233010',
+                  widget.searchCity ?? 'Gujrat', 7),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  print('Error in second container: ${snapshot.error}');
+                  return Text('Error: ${snapshot.error}');
+                } else if (!snapshot.hasData) {
+                  return Text('No data available');
+                } else {
+                  final hourlyData = snapshot.data;
+                  final iconURL =
+                      hourlyData!.forecast!.forecastday![0].day!.condition!.icon;
+      
+                  return Column(
+                    children: [
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                              height: screenHeight * 0.35,
+                              width: screenWidth * 0.88,
+                              decoration: BoxDecoration(
+                                color: bluecolor.withOpacity(0.7),
+                                border:
+                                    Border.all(color: Colors.white, width: 1.0),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.white,
+                                    offset: Offset(0, 2),
+                                    blurRadius: 2, // Blur radius of the shadow
+                                    spreadRadius:
+                                        1, // Spread radius of the shadow
                                   ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    height: 20,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        formatDate(
-                                          hourlyData!.forecast!
-                                              .forecastday![index].date
-                                              .toString(),
-                                        ),
+                                        formatDate(hourlyData
+                                            .forecast!.forecastday![0].date
+                                            .toString()),
                                         style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                            fontSize: 18,
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      SizedBox(
+                                        width: 15,
                                       ),
                                       Text(
-                                        hourlyData!
-                                                .forecast!
-                                                .forecastday![index]
-                                                .day!
+                                        hourlyData!.forecast!.forecastday![0].day!
                                                 .avgtempC
                                                 .toString() +
-                                            ' °C  ',
+                                            ' C  ',
                                         style: TextStyle(
-                                            fontSize: 18, color: Colors.white),
+                                          fontSize: 19,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                      Image.network('https:' + iconurl!),
+                                      Image.network('https:' + iconURL!),
                                     ],
                                   ),
+                                  SizedBox(
+                                    height: 20,
+                                  ),
+                                  Divider(
+                                    color: Colors.white,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment
+                                        .spaceAround, 
+                                    crossAxisAlignment: CrossAxisAlignment.center
+                                      , 
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                        WeatherIcons.wind_beaufort_0,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                      Text(
+                                        hourlyData.forecast!.forecastday![0].day!
+                                                .maxwindKph
+                                                .toString() +
+                                            ' Wind',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                        ],
+                                      ),
+                                      
+                                      
+                                      Row(children: [
+                                         Icon(
+                                        WeatherIcons.raindrop,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                      Text(
+                                        hourlyData!.forecast!.forecastday![0].day!
+                                                .avghumidity
+                                                .toString() +
+                                            '% Humidity',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      ],),
+                                     
+                                      
+                                    ],
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment
+                                        .spaceAround, 
+                                    crossAxisAlignment: CrossAxisAlignment
+                                        .center, 
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                        WeatherIcons.rain,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                       Text(
+                                        hourlyData!.forecast!.forecastday![0].day!
+                                                .dailyChanceOfRain
+                                                .toString() +
+                                            '  Chance of rain',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                        ],
+                                      ),
+                                      
+                                     
+                                      Row(
+                                        children: [
+                                          Icon(
+                                        WeatherIcons.thermometer,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                      Text(
+                                        hourlyData!.forecast!.forecastday![0].day!
+                                                .totalprecipIn
+                                                .toString() +
+                                            ' Pressure',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                        ],
+                                      ),
+                                      
+                                      
+                                    ],
+                                  ),
+                                ],
+                              )),
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          physics :NeverScrollableScrollPhysics(),
+                            scrollDirection: Axis.vertical,
+                            itemCount: hourlyData!.forecast!.forecastday?.length,
+                            itemBuilder: (context, index) {
+                              final iconurl = hourlyData.forecast!
+                                  .forecastday![index].day!.condition!.icon;
+                              return Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: Center(
+                                  child: Container(
+                                    height: screenHeight * 0.1,
+                                    width: screenWidth * 0.88,
+                                    decoration: BoxDecoration(
+                                      color: bluecolor.withOpacity(0.7),
+                                      border: Border.all(
+                                          color: Colors.white, width: 1.0),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.white,
+                                          offset: Offset(2, 2),
+                                          blurRadius:
+                                              2, // Blur radius of the shadow
+                                          spreadRadius:
+                                              1, // Spread radius of the shadow
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Text(
+                                          formatDate(
+                                            hourlyData!.forecast!
+                                                .forecastday![index].date
+                                                .toString(),
+                                          ),
+                                          style: TextStyle(
+                                              fontSize: 18, color: Colors.white),
+                                        ),
+                                        Text(
+                                          hourlyData!
+                                                  .forecast!
+                                                  .forecastday![index]
+                                                  .day!
+                                                  .avgtempC
+                                                  .toString() +
+                                              ' °C  ',
+                                          style: TextStyle(
+                                              fontSize: 18, color: Colors.white),
+                                        ),
+                                        Image.network('https:' + iconurl!),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            );
-                          }),
-                    ),
-                  ],
-                );
-              }
-            }),
+                              );
+                            }),
+                      ),
+                    ],
+                  );
+                }
+              }),
+        ),
       ),
     );
   }

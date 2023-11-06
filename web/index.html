@@ -41,6 +41,21 @@
 </head>
 <body>
   <script>
+    // Add this script to request geolocation permissions
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        // Handle success, e.g., display the user's location
+        var latitude = position.coords.latitude;
+        var longitude = position.coords.longitude;
+      }, function(error) {
+        // Handle error, e.g., show a message to the user
+        console.error('Geolocation error: ' + error.message);
+      });
+    } else {
+      console.log('Geolocation is not supported in this browser.');
+    }
+  </script>
+  <script>
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
       _flutter.loader.loadEntrypoint({
