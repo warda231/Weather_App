@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage> {
 
   location_package.Location locations = location_package.Location();
   LocationData? currentLocation;
+  
   @override
   void initState() {
     super.initState();
@@ -70,11 +71,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    String formatTime(String time) {
+    /*String formatTime(String time) {
       final parsedTime = DateTime.parse(time);
       final formattedTime = DateFormat.jm().format(parsedTime);
       return formattedTime;
-    }
+    }*/
 
     String formatTimeWithoutMinutes(String time) {
       final parsedTime = DateTime.parse(time);
@@ -182,7 +183,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               Text(
-                                formatTime(weatherData.location.localtime),
+                                weatherData.location.localtime,
                                 style: TextStyle(
                                   fontSize: 20,
                                   color: Colors.white,

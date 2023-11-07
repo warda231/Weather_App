@@ -48,6 +48,8 @@ Future<ForecastData> fetchForecastData(
   }
 }
 
+
+
 Future<WeatherData> fetchData(String apiKey, String city) async {
   final url =
       'https://api.weatherapi.com/v1/current.json?key=$apiKey&q=$city&aqi=yes';

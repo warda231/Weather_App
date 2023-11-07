@@ -2,10 +2,12 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_app/Constants/colors.dart';
 import 'package:weather_app/View/next_days.dart';
 import 'package:weather_icons/weather_icons.dart';
@@ -33,6 +35,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
+    loadData();
   }
 
   Timer? _debounce;
@@ -55,18 +58,45 @@ class _SearchPageState extends State<SearchPage> {
     });
   }
 
-   String formatTime(String time) {
+  /*String formatTime(String time) {
       final parsedTime = DateTime.parse(time);
       final formattedTime = DateFormat('EEE').format(parsedTime);
       return formattedTime;
-    }
+    }*/
 
-    String formatTimeWithoutMinutes(String time) {
-      final parsedTime = DateTime.parse(time);
+  String formatTimeWithoutMinutes(String time) {
+    final parsedTime = DateTime.parse(time);
 
-      final formattedTime = DateFormat('h a').format(parsedTime);
-      return formattedTime;
-    }
+    final formattedTime = DateFormat('h a').format(parsedTime);
+    return formattedTime;
+  }
+
+  var storedData;
+
+  Future<List<String>> loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final searchHistory = prefs.getStringList('searchHistory') ?? [];
+    return searchHistory;
+  }
+
+  Future<void> saveData(query) async {
+    final prefs = await SharedPreferences.getInstance();
+    final searchHistory = prefs.getStringList('searchHistory') ?? [];
+    searchHistory.add(query);
+    await prefs.setStringList('searchHistory', searchHistory);
+    setState(() {}); // Rebuild the widget to reflect the changes.
+  }
+
+  Future<void> deleteItemFromSharedPreferences(String item) async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> searchHistory = prefs.getStringList('searchHistory') ?? [];
+
+    searchHistory.remove(item);
+
+    await prefs.setStringList('searchHistory', searchHistory);
+
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,9 +130,9 @@ class _SearchPageState extends State<SearchPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     TextEditingController searchController = TextEditingController();
-   
 
     return Scaffold(
+      
       body: SingleChildScrollView(
         child: Container(
           height: 1000,
@@ -174,6 +204,86 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
               ),
+              FutureBuilder<List<String>>(
+                future: loadData(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else {
+                    final searchHistory = snapshot.data;
+
+                    if (searchHistory != null && searchHistory.isNotEmpty) {
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: searchHistory.map((item) {
+                            return Column(
+                              children: [
+                                Stack(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 5.0,
+                                      ),
+                                      child: Container(
+                                        height: screenHeight * 0.09,
+                                        width: screenWidth * 0.25,
+                                        decoration: BoxDecoration(
+                                          color: purple.withOpacity(0.7),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: InkWell(
+                                            onTap: () {
+                                              selectCity(item);
+                                              selected = true;
+                                            },
+                                            child: Text(
+                                              item,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: InkWell(
+                                        onTap: () {
+                                          deleteItemFromSharedPreferences(item);
+                                        },
+                                        child: Icon(
+                                          Icons.close,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    } else {
+                      return Text('No search history available');
+                    }
+                  }
+                },
+              ),
               if (filteredCities.isNotEmpty)
                 Container(
                   width: screenWidth * 0.88,
@@ -182,8 +292,7 @@ class _SearchPageState extends State<SearchPage> {
                     color: bluecolor,
                   ),
                   child: ListView.builder(
-                    itemCount:
-                        filteredCities.length, // Use filteredCities here.
+                    itemCount: filteredCities.length,
                     itemBuilder: (context, index) {
                       final city = filteredCities[index];
 
@@ -191,6 +300,7 @@ class _SearchPageState extends State<SearchPage> {
                         onTap: () {
                           selectCity(city.name);
                           selected = true;
+                          //saveData(city.name);
                         },
                         child: ListTile(
                           title: Text(
@@ -233,29 +343,69 @@ class _SearchPageState extends State<SearchPage> {
 
                             return Column(
                               children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(10.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.location_on,
-                                        color: Colors.white,
+                                Stack(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(10.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            color: Colors.white,
+                                          ),
+                                          Text(
+                                            weatherData!.location.name
+                                                .toString(),
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        weatherData!.location.name.toString(),
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
+                                    ),
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: InkWell(
+                                        onTap: () {
+                                          saveData(
+                                            weatherData!.location.name
+                                                .toString(),
+                                          );
+                                        },
+                                        child: Container(
+                                          height: screenHeight * 0.05,
+                                          width: screenWidth * 0.16,
+                                          decoration: BoxDecoration(
+                                            color: purple.withOpacity(0.7),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              'Add',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                                 Text(
-                                  formatTime(weatherData.location.localtime),
-                                  //weatherData.location.localtime,
+                                  weatherData.location.localtime,
                                   style: TextStyle(
                                     fontSize: 20,
                                     color: Colors.white,
