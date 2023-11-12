@@ -82,8 +82,10 @@ class _SearchPageState extends State<SearchPage> {
   Future<void> saveData(query) async {
     final prefs = await SharedPreferences.getInstance();
     final searchHistory = prefs.getStringList('searchHistory') ?? [];
-    searchHistory.add(query);
-    await prefs.setStringList('searchHistory', searchHistory);
+     if (!searchHistory.contains(query)) {
+      searchHistory.add(query);
+      await prefs.setStringList('searchHistory', searchHistory);
+    }
     setState(() {}); // Rebuild the widget to reflect the changes.
   }
 
@@ -135,10 +137,10 @@ class _SearchPageState extends State<SearchPage> {
       
       body: SingleChildScrollView(
         child: Container(
-          height: 1000,
+          height: 790,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-                colors: [bluecolor, lightblue, purple],
+                colors: [bluecolor, purple],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter),
             //color: purple,
@@ -153,6 +155,7 @@ class _SearchPageState extends State<SearchPage> {
           ),
           child: Column(
             children: [
+              SizedBox(height: 25,),
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -163,7 +166,7 @@ class _SearchPageState extends State<SearchPage> {
                       onChanged: (query) {
                         if (_debounce?.isActive ?? false) _debounce!.cancel();
                         _debounce =
-                            Timer(const Duration(milliseconds: 500), () {
+                            Timer(const Duration(milliseconds: 1000), () {
                           fetchCityData(query, '9b3fa55b5c4a4a89a9855630233010')
                               .then((result) {
                             setState(() {
@@ -209,8 +212,6 @@ class _SearchPageState extends State<SearchPage> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
                   } else {
                     final searchHistory = snapshot.data;
 
@@ -279,7 +280,7 @@ class _SearchPageState extends State<SearchPage> {
                         ),
                       );
                     } else {
-                      return Text('No search history available');
+                      return SizedBox(height: 1,);
                     }
                   }
                 },
@@ -287,7 +288,7 @@ class _SearchPageState extends State<SearchPage> {
               if (filteredCities.isNotEmpty)
                 Container(
                   width: screenWidth * 0.88,
-                  height: screenHeight * 0.1,
+                  height: screenHeight * 0.19,
                   decoration: BoxDecoration(
                     color: bluecolor,
                   ),
@@ -319,11 +320,7 @@ class _SearchPageState extends State<SearchPage> {
                 Container(
                   height: screenHeight * 0.50,
                   width: screenWidth * 0.88,
-                  decoration: BoxDecoration(
-                    color: bluecolor.withOpacity(0.5),
-                    border: Border.all(color: Colors.white, width: 2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  
                   child: Expanded(
                     child: FutureBuilder(
                         future: fetchData('9b3fa55b5c4a4a89a9855630233010',
@@ -534,22 +531,15 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
               SizedBox(
-                height: screenHeight * 0.01,
+                height: 5,
               ),
               if (selected == true)
                 Container(
-                  height: screenHeight * 0.35,
+                  height: screenHeight * 0.3,
                   width: screenWidth * 0.90,
-                  decoration: BoxDecoration(
-                    color: bluecolor.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2,
-                    ),
-                  ),
+                 
                   child: FutureBuilder(
-                      future: fetchForecastData(
+                      future: fetchForecastDataSearch(
                           '9b3fa55b5c4a4a89a9855630233010',
                           location ?? 'Gujrat',
                           1),
@@ -587,7 +577,8 @@ class _SearchPageState extends State<SearchPage> {
                                                   builder: (context) =>
                                                       NextDaysPage(
                                                           searchCity: location
-                                                              .toString())));
+                                                              .toString(),
+                                                              )));
                                         },
                                         child: Text(
                                           'Next 7 Days',

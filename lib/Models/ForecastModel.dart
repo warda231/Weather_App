@@ -87,7 +87,7 @@ class Current {
   double? windKph;
   int? windDegree;
   String? windDir;
-  int? pressureMb;
+  double? pressureMb;
   double? pressureIn;
   double? precipMm;
   double? precipIn;
@@ -95,9 +95,9 @@ class Current {
   int? cloud;
   double? feelslikeC;
   double? feelslikeF;
-  int? visKm;
-  int? visMiles;
-  int? uv;
+  double? visKm;
+  double? visMiles;
+  double? uv;
   double? gustMph;
   double? gustKph;
 
@@ -131,7 +131,7 @@ class Current {
     lastUpdated = json['last_updated'];
     tempC = json['temp_c'];
     tempF = json['temp_f'];
-    isDay = json['is_day'];
+    isDay = json['is_day']?.toInt();
     condition = json['condition'] != null
         ? new Condition.fromJson(json['condition'])
         : null;
@@ -280,16 +280,16 @@ class Day {
   double? maxwindKph;
   double? totalprecipMm;
   double? totalprecipIn;
-  int? totalsnowCm;
+  double? totalsnowCm;
   double? avgvisKm;
-  int? avgvisMiles;
-  int? avghumidity;
+  double? avgvisMiles;
+  double? avghumidity;
   int? dailyWillItRain;
   int? dailyChanceOfRain;
   int? dailyWillItSnow;
   int? dailyChanceOfSnow;
   Condition? condition;
-  int? uv;
+  double? uv;
 
   Day(
       {this.maxtempC,
@@ -422,7 +422,7 @@ class Hour {
   double? windKph;
   int? windDegree;
   String? windDir;
-  int? pressureMb;
+  double? pressureMb;
   double? pressureIn;
   double? precipMm;
   double? precipIn;
@@ -440,11 +440,11 @@ class Hour {
   int? chanceOfRain;
   int? willItSnow;
   int? chanceOfSnow;
-  int? visKm;
-  int? visMiles;
+  double? visKm;
+  double? visMiles;
   double? gustMph;
   double? gustKph;
-  int? uv;
+  double? uv;
 
   Hour(
       {this.timeEpoch,

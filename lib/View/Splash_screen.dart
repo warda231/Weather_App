@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:weather_app/Constants/colors.dart';
-import 'package:get/get.dart';
 import 'package:weather_app/View/Home_screen.dart';
+
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -58,7 +58,7 @@ class SplashScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(15.0),
                 child: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const HomePage()),

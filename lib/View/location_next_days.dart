@@ -5,19 +5,22 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:weather_app/Constants/colors.dart';
 import 'package:weather_app/Models/ForecastModel.dart';
+import 'package:weather_app/Services/Api_call.dart';
 import 'package:weather_icons/weather_icons.dart';
 import 'package:intl/intl.dart';
 
 import 'package:http/http.dart' as http;
 
-class NextDaysPage extends StatefulWidget {
-  const NextDaysPage({super.key, required this.searchCity});
+class LocationNextDaysPage extends StatefulWidget {
+  const LocationNextDaysPage({super.key, required this.lat, required this.lon, });
   @override
-  State<NextDaysPage> createState() => _NextDaysPageState();
-  final String searchCity;
+  State<LocationNextDaysPage> createState() => _LocationNextDaysPageState();
+  final double lat;
+    final double lon;
+
 }
 
-class _NextDaysPageState extends State<NextDaysPage> {
+class _LocationNextDaysPageState extends State<LocationNextDaysPage> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -28,22 +31,7 @@ class _NextDaysPageState extends State<NextDaysPage> {
       return formattedDate;
     }
 
-    Future<ForecastData> fetchForecastData(
-        String apiKey, String city, int days) async {
-      final url =
-          'https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=$city&days=$days&aqi=no&alerts=no';
-
-      final response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        print(response.body);
-
-        return ForecastData.fromJson(data);
-      } else {
-        throw Exception('Failed to load weather data');
-      }
-    }
+    
 
     return Scaffold(
       appBar: AppBar(
@@ -70,13 +58,13 @@ class _NextDaysPageState extends State<NextDaysPage> {
 
           decoration: BoxDecoration(
             gradient: LinearGradient(
-                colors: [bluecolor, purple],
+                colors: [bluecolor, lightblue, purple],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter),
           ),
           child: FutureBuilder(
-              future: fetchForecastData('9b3fa55b5c4a4a89a9855630233010',
-                  widget.searchCity ?? 'Gujrat', 7),
+              future: fetchlocationForecastData('9b3fa55b5c4a4a89a9855630233010',
+                  widget.lat, widget.lon ?? 0.0, 7),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -203,7 +191,7 @@ class _NextDaysPageState extends State<NextDaysPage> {
                                     ],
                                   ),
                                   SizedBox(
-                                    height: 15,
+                                    height: 25,
                                   ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment

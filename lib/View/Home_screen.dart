@@ -7,11 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:weather_app/Constants/colors.dart';
 import 'package:weather_app/View/Search.dart';
+import 'package:weather_app/View/location_next_days.dart';
 import 'package:weather_app/View/next_days.dart';
 import 'package:weather_icons/weather_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
-import 'dart:html' as html;
 
 import '../Models/CityModel.dart';
 import '../Services/Api_call.dart';
@@ -29,10 +29,9 @@ class _HomePageState extends State<HomePage> {
   String? selectedCity;
   double? locationlatitude;
   double? locationlongitude;
+  Location locations = Location();
+  LocationData? _currentPosition;
 
-  location_package.Location locations = location_package.Location();
-  LocationData? currentLocation;
-  
   @override
   void initState() {
     super.initState();
@@ -41,29 +40,42 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _getCurrentLocation() async {
     try {
-      final position =
-          await html.window.navigator.geolocation.getCurrentPosition();
-      final latitude = position.coords?.latitude;
-      final longitude = position.coords?.longitude;
+      bool _serviceEnabled;
+      PermissionStatus _permissionGranted;
+
+      _serviceEnabled = await locations.serviceEnabled();
+      if (!_serviceEnabled) {
+        _serviceEnabled = await locations.requestService();
+        if (!_serviceEnabled) {
+          return;
+        }
+      }
+
+      _permissionGranted = await locations.hasPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        _permissionGranted = await locations.requestPermission();
+        if (_permissionGranted != PermissionStatus.granted) {
+          return;
+        }
+      }
+
+      _currentPosition = await locations.getLocation();
+      final latitude = _currentPosition?.latitude;
+      final longitude = _currentPosition?.longitude;
 
       if (latitude != null && longitude != null) {
         print('Latitude: $latitude, Longitude: $longitude');
       } else {
-        // Handle the case where the position is not available.
         print('Latitude and longitude not available.');
       }
+
       setState(() {
-        locationlatitude = latitude as double?;
-        locationlongitude = longitude as double?;
+        locationlatitude = latitude;
+        locationlongitude = longitude;
       });
     } catch (e) {
       final errorMessage = e.toString();
-      if (errorMessage.contains('User denied permission') ||
-          errorMessage.contains('PositionError')) {
-        print('Geolocation error: Permission denied or PositionError');
-      } else {
-        print('Error: $e');
-      }
+      print('Error: $errorMessage');
     }
   }
 
@@ -86,8 +98,11 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: bluecolor,
-        title: Center(
+        centerTitle: true,
+        title: Align(
+          alignment: Alignment.center,
           child: Text(
             'Weather App',
             style: TextStyle(
@@ -114,9 +129,11 @@ class _HomePageState extends State<HomePage> {
       body: SingleChildScrollView(
         child: Container(
           width: double.infinity,
+          height: 740,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-                colors: [bluecolor, lightblue, purple],
+                colors: [bluecolor, purple],
+                //stops: [0.1,0.6,0.8,1.0],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter),
             boxShadow: [
@@ -136,11 +153,6 @@ class _HomePageState extends State<HomePage> {
               Container(
                 height: screenHeight * 0.50,
                 width: screenWidth * 0.88,
-                decoration: BoxDecoration(
-                  color: bluecolor.withOpacity(0.5),
-                  border: Border.all(color: Colors.white, width: 2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
                 child: Expanded(
                   child: FutureBuilder(
                       future: fetchlocationData(
@@ -166,6 +178,7 @@ class _HomePageState extends State<HomePage> {
                                 padding: const EdgeInsets.all(10.0),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Icon(
                                       Icons.location_on,
@@ -174,7 +187,7 @@ class _HomePageState extends State<HomePage> {
                                     Text(
                                       weatherData!.location.name.toString(),
                                       style: TextStyle(
-                                        fontSize: 20,
+                                        fontSize: 25,
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -183,7 +196,8 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               Text(
-                                weatherData.location.localtime,
+                                formatTimeWithoutMinutes(
+                                    weatherData.location.localtime.toString()),
                                 style: TextStyle(
                                   fontSize: 20,
                                   color: Colors.white,
@@ -313,16 +327,8 @@ class _HomePageState extends State<HomePage> {
                 height: screenHeight * 0.01,
               ),
               Container(
-                height: screenHeight * 0.35,
+                height: screenHeight * 0.3,
                 width: screenWidth * 0.90,
-                decoration: BoxDecoration(
-                  color: bluecolor.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ),
-                ),
                 child: FutureBuilder(
                     future: fetchlocationForecastData(
                         '9b3fa55b5c4a4a89a9855630233010',
@@ -360,9 +366,12 @@ class _HomePageState extends State<HomePage> {
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                    NextDaysPage(
-                                                        searchCity: location
-                                                            .toString())));
+                                                    LocationNextDaysPage(
+                                                      lat: locationlatitude ??
+                                                          0.0,
+                                                      lon: locationlongitude ??
+                                                          0.0,
+                                                    )));
                                       },
                                       child: Text(
                                         'Next 7 Days',
@@ -376,9 +385,12 @@ class _HomePageState extends State<HomePage> {
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                    NextDaysPage(
-                                                        searchCity: location
-                                                            .toString())));
+                                                    LocationNextDaysPage(
+                                                      lat: locationlatitude ??
+                                                          0.0,
+                                                      lon: locationlongitude ??
+                                                          0.0,
+                                                    )));
                                       },
                                       child: Icon(
                                         Icons.arrow_forward,
@@ -408,8 +420,8 @@ class _HomePageState extends State<HomePage> {
                                     return Padding(
                                       padding: const EdgeInsets.all(5.0),
                                       child: Container(
-                                        height: screenHeight * 0.13,
-                                        width: screenWidth * 0.19,
+                                        height: screenHeight * 0.1,
+                                        width: screenWidth * 0.17,
                                         decoration: BoxDecoration(
                                           color: purple.withOpacity(0.7),
                                           border:
@@ -447,7 +459,7 @@ class _HomePageState extends State<HomePage> {
                                                   'https:' + iconURL!),
                                               Text(
                                                 hourData.tempC.toString() +
-                                                    ' °C',
+                                                    '°C',
                                                 style: TextStyle(
                                                     fontSize: 16,
                                                     color: bluecolor,
